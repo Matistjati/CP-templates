@@ -46,6 +46,27 @@ ull getDivisorcount(vector<ull> factors, bool isSorted = false)
     }
     return ans;
 }
+// Get a list of the prime factors in the form (base, power). e.g. 2^5+11^2
+typedef pair<ull, ull> pull;
+typedef vector<pull> vpll;
+vpll power_list(vector<ull> factors)
+{
+    vpll ret;
+    sort(all(factors));
+    int i = 0;
+    while (i < factors.size())
+    {
+        int start = factors[i];
+        pull prime;
+        prime.first = start;
+        for (; i < factors.size() && factors[i] == start; i++)
+        {
+            prime.second++;
+        }
+        ret.push_back(prime);
+    }
+    return ret;
+}
 // Find all divisors in sqrt(a) time. pretty bad
 vi getDivsSlow(ll a)
 {
