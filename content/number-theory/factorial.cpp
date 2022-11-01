@@ -15,3 +15,19 @@ struct LogFactorial
     inline double operator[](int index) { return fact[index]; }
     inline double choose(int n, int k) { return fact[n] - fact[k] - fact[n - k]; }
 };
+
+struct ModFactorial
+{
+    vi fact;
+    ModFactorial(int hi, int mod) : fact(hi, 0)
+    {
+        int v = 1;
+        repp(i, 1, hi)
+        {
+            v *= i;
+            v %= mod;
+            fact[i] = v;
+        }
+    }
+    inline double operator[](int index) { return fact[index]; }
+};
