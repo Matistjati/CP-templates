@@ -57,3 +57,19 @@ hashType stringHash(string& s)
     }
     return ret;
 }
+
+vector<ull> prefixHash(string& s)
+{
+    int pow = 153;
+    ull ret = 0;
+    ull base = 1;
+    vector<ull> prefixes(s.size());
+
+    rep(i, s.size())
+    {
+        ret += s[i] * base;
+        prefixes[i] = ret;
+        base *= pow;
+    }
+    return prefixes;
+}
