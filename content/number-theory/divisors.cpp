@@ -67,6 +67,15 @@ vpll power_list(vector<ull> factors)
     }
     return ret;
 }
+
+int phi(vector<ull> primefactors)
+{
+    vpll primes = power_list(primefactors);
+    int ans = 1;
+    repe(p, primes) ans *= binpow(p.first, p.second - 1) * (p.first - 1);
+    return ans;
+}
+
 // Find all divisors in sqrt(a) time. pretty bad
 vi getDivsSlow(ll a)
 {
