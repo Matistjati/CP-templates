@@ -44,7 +44,7 @@ struct DoubleHash
 
 typedef ull hashType;
 
-hashType stringHash(string& s)
+hashType stringHash(const string& s)
 {
     int pow = 153;
     hashType ret = 0;
