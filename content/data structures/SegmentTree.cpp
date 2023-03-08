@@ -1,8 +1,9 @@
 struct Tree
 {
+    const int unit = -inf;
     int n;
     vi tree;
-    Tree(int n) : n(n), tree(n * 4, -inf) {}
+    Tree(int n) : n(n), tree(n * 4, unit) {}
 
     int merge(int a, int b)
     {
@@ -25,7 +26,7 @@ struct Tree
 
     int query(int x, int l, int r, int ql, int qr)
     {
-        if (l > qr || r < ql) return -inf;
+        if (l > qr || r < ql) return unit;
         if (l >= ql && r <= qr) return tree[x];
 
         int mid = (l + r) / 2;
