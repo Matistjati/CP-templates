@@ -35,7 +35,7 @@ struct DoubleHash
     RollingHash h1;
     RollingHash h2;
     DoubleHash(string& s, int base = 131, int mod = 1e9 + 7) : h1(s, base, mod), h2(s, base, mod) {}
-    ull GetHash(int l, int r)
+    ull gethash(int l, int r)
     {
         ull hash = ((ull)h1.gethash(l, r) << 32) + h2.gethash(l, r);
         return hash;
