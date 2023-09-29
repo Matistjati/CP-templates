@@ -10,7 +10,7 @@ struct RollingHash
 
         per(i, s.size())
         {
-            suf[i] = ((ll)suf[i + 1] * base + (s[i] - 'a' + 1)) % mod;
+            suf[i] = ((ll)suf[i + 1] * base + s[i]) % mod;
         }
 
         repp(i, 2, s.size() + 1)
