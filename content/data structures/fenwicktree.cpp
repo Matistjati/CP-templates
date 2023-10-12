@@ -1,19 +1,25 @@
 struct Tree
 {
-	vi s;
-	Tree(int n) : s(n) {}
+    vi tree;
+    Tree(int n) : tree(n+1) {}
 
-	void update(int i, int v)
-	{
-		for (; i < sz(s); i |= i + 1) s[i] += v;
-	}
+    void update(int i, int v)
+    {
+        for (i++; i < tree.size(); i += i & -i)
+            tree[i] += v;
+    }
 
-	int query(int r)
-	{
-		int ret = 0;
-		for (; r; r &= r - 1) ret += s[r - 1];
-		return ret;
-	}
+    int query(int r)
+    {
+        int ret = 0;
+        for (r++; r > 0; r -= r & -r)
+            ret += tree[r];
+        return ret;
+    }
 
-	int query(int l, int r) { return query(r + 1) - query(l); }
+    int sum(int l, int r)
+    {
+        if (l) l = query(l-1);
+        return query(r) - l;
+    }
 };
