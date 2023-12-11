@@ -19,7 +19,7 @@ struct LogFactorial
 struct ModFactorial
 {
     vi fact;
-    ModFactorial(int hi, int mod) : fact(hi, 0)
+    ModFactorial(int hi, int mod) : fact(hi, 1)
     {
         int v = 1;
         repp(i, 1, hi)
@@ -29,5 +29,7 @@ struct ModFactorial
             fact[i] = v;
         }
     }
-    inline double operator[](int index) { return fact[index]; }
+    inline int operator[](int index) { return fact[index]; }
+    inline int choose(int n, int k) { return fact[n] * binpow(fact[k], mod - 2, mod) % mod * binpow(fact[n - k], mod - 2, mod) % mod; } // assumes prime mod
 };
+
