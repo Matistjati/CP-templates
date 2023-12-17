@@ -1,3 +1,5 @@
+// Use with caution: variable 'reward' in mincost_flow affects running time and correctness.
+// Too large-> int overflow (We get reward*maxflow large integers, maybe larger). Too small and we won't find max flow. Smaller=better performance
 // Modified MCMF for ease of use, taken from https://ideone.com/q6PWgB
 // push-relabel cost-scaling by Min-25
 // uploaded by dacin21
@@ -116,12 +118,16 @@ public:
 
     // Implementation detail: if flow is > 1e9, this will overflow
     // In that case, lower reward. Always ensure reward is less than longest possible augmenting path
-    pair<TotalCostType, TotalCostType> mincost_flow(int source, int sink) 
+    pair<TotalCostType, TotalCostType> mincost_flow(int source, int sink)
     {
-        int reward = -1e5;
+        int reward = -1e10;
         add_edge(sink, source, inf, reward);
         int t = minimum_cost_circulation().second;
-        return { t/(-reward),t%(-reward)};
+        int cost = t;
+        cost %= -reward;
+        cost -= reward;
+        cost %= -reward;
+        return { t==0?0:ceildiv(t,reward),cost };
     }
 
 private:
