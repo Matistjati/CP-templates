@@ -1,13 +1,9 @@
 // Use with caution: variable 'reward' in mincost_flow affects running time and correctness.
 // Too large-> int overflow (We get reward*maxflow large integers, maybe larger). Too small and we won't find max flow. Smaller=better performance
 // Modified MCMF for ease of use, taken from https://ideone.com/q6PWgB
+
 // push-relabel cost-scaling by Min-25
-// uploaded by dacin21
-/* original source (url long dead, Min-25 deleted his account?):
- *  https://gist
- *  .github.com/min-25/05e2a0161b6a919d321e116dd78c7535
- * (line-wrapped so ideone doesn't nuke the link.)
- */
+
 
 template <
     typename CapType, typename TotalCapType,
