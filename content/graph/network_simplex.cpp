@@ -20,6 +20,10 @@ struct network_simplex {
         assert(0 <= u && u < V && 0 <= v && v < V&& lower <= upper);
         return edge.push_back({ {u, v}, lower, upper, cost }), E++;
     }
+    int add(int u, int v, Flow upper, Cost cost) {
+        assert(0 <= u && u < V && 0 <= v && v < V&& 0 <= upper);
+        return edge.push_back({ {u, v}, 0, upper, cost }), E++;
+    }
     int add_node() { return node.emplace_back(), V++; }
 
     void add_supply(int u, Flow supply) { node[u].supply += supply; }
@@ -99,7 +103,7 @@ struct network_simplex {
     // You must set supply at the source(s) and demand at the sink(s) (inf for maxflow)
     // The excess at a supply/source node u will be in the range [0,supply[u]].
     // The excess at a demand/sink   node u will be in the range [supply[u],0].
-    pair<Flow,Cost> mincost_flow(int source, int sink) {
+    pair<Flow, Cost> mincost_flow(int source, int sink) {
         add_supply(source, inf);
         add_demand(sink, inf);
         run();
@@ -112,7 +116,7 @@ struct network_simplex {
         }
 
         edge.resize(E);
-        return { maxflow,get_circulation_cost()};
+        return { maxflow,get_circulation_cost() };
     }
 
     // Implementation
@@ -356,3 +360,4 @@ struct network_simplex {
         }
     }
 };
+
