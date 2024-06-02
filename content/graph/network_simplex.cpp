@@ -16,12 +16,12 @@ template <typename Flow = int64_t, typename Cost = int64_t>
 struct network_simplex {
     explicit network_simplex(int V) : V(V), node(V + 1) {}
 
-    int add(int u, int v, Flow lower, Flow upper, Cost cost) {
+    int addEdge(int u, int v, Flow lower, Flow upper, Cost cost) {
         assert(0 <= u && u < V && 0 <= v && v < V&& lower <= upper);
         return edge.push_back({ {u, v}, lower, upper, cost }), E++;
     }
-    int add(int u, int v, Flow upper, Cost cost) {
-        assert(0 <= u && u < V && 0 <= v && v < V&& 0 <= upper);
+    int addEdge(int u, int v, Flow upper, Cost cost) {
+        assert(0 <= u && u < V && 0 <= v && v < V && 0 <= upper);
         return edge.push_back({ {u, v}, 0, upper, cost }), E++;
     }
     int add_node() { return node.emplace_back(), V++; }
@@ -103,7 +103,7 @@ struct network_simplex {
     // You must set supply at the source(s) and demand at the sink(s) (inf for maxflow)
     // The excess at a supply/source node u will be in the range [0,supply[u]].
     // The excess at a demand/sink   node u will be in the range [supply[u],0].
-    pair<Flow, Cost> mincost_flow(int source, int sink) {
+    pair<Flow, Cost> maxflow(int source, int sink) {
         add_supply(source, inf);
         add_demand(sink, inf);
         run();
