@@ -1,39 +1,36 @@
 struct Edmonds
 {
 	vvi flow;
-	vvi capacity;
+	vvi cap;
 	vi par;
 	int n;
 	int tot_flow = 0;
 
 	void addEdge(int a, int b, int c)
 	{
-		capacity[a][b] = c;
+		cap[a][b] += c;
 	}
 
-	Edmonds(int n) : n(n), flow(n, vi(n)), capacity(n, vi(n)), par(n) {}
+	Edmonds(int n) : n(n), flow(n, vi(n)), cap(n, vi(n)), par(n) {}
 
 	int bfs(int s, int t)
 	{
 		rep(i, n) par[i] = -1;
 		par[s] = -2;
-		queue<p2> q;
-		q.emplace(s, inf);
+		queue<int> q;
+		q.emplace(s);
 
 		while (q.size())
 		{
-			int u, f;
-			tie(u, f) = q.front(); q.pop();
+			int u = q.front(); q.pop();
 
 			rep(e, n)
 			{
-				if (par[e] == -1 && flow[u][e] < capacity[u][e])
+				if (par[e] == -1 && flow[u][e] < cap[u][e])
 				{
 					par[e] = u;
-					int newflow = min(f, capacity[u][e] - flow[u][e]);
-
-					if (e == t) return newflow;
-					q.emplace(e, newflow);
+					if (e == t) return 1;
+					q.emplace(e);
 				}
 			}
 		}
@@ -43,9 +40,14 @@ struct Edmonds
 
 	int augment(int s, int t) // find one augmenting path
 	{
-		int f = 0;
-		if (f = bfs(s, t))
+		if (bfs(s, t))
 		{
+			int f = inf;
+			for (int cur = t; cur != s; cur = par[cur])
+			{
+				int p = par[cur];
+				f = min(f, cap[p][cur]-flow[p][cur]);
+			}
 			tot_flow += f;
 			for (int cur = t; cur != s; cur = par[cur])
 			{
@@ -61,7 +63,7 @@ struct Edmonds
 
 	int maxflow(int s, int t)
 	{
-		while(augment(s,t)) {}
+		while (augment(s, t)) {}
 		return tot_flow;
 	}
 };
