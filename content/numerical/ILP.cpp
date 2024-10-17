@@ -1,6 +1,30 @@
-// Use with KACTL LP solver
+// Max ILP solver, use with KACTL LP solver
+
+bool is_integer(double x)
+{
+	return abs(x - floor(x)) < eps;
+}
+
+bool is_feasible(vd& x, vvd& A, vd& b, vi& integer_constraint)
+{
+	rep(i, sz(x))
+	{
+		if (integer_constraint[i] && !is_integer(x[i])) return false;
+	}
+	rep(i, sz(b))
+	{
+		double v = 0;
+		rep(j, sz(x)) v += x[j] * A[i][j];
+		if (v > b[i]) return false;
+	}
+
+	return true;
+}
 
 double global_lb = -inf;
+vvd A;
+vd b, c;
+vi integer_constraint;
 struct node
 {
 	double ub;
@@ -8,7 +32,7 @@ struct node
 	int var_index;
 	int smaller;
 	bool pruned = 0;
-	node(int var_index, int smaller, vvd& A, vd& b, vd& c, vi& integer_constraint) : smaller(smaller), var_index(var_index)
+	node(int var_index, int smaller) : smaller(smaller), var_index(var_index)
 	{
 		x.resize(sz(c));
 		ub = LPSolver(A, b, c).solve(x);
@@ -43,13 +67,13 @@ struct node
 			rounded = x;
 			rep(i, sz(rounded)) rounded[i] = ceil(rounded[i]);
 			check_sol(rounded);
-			
+
 			rounded = x;
 			rep(i, sz(rounded)) rounded[i] = round(rounded[i]);
 			check_sol(rounded);
 		}
 	}
-	void bb(int d, vvd& A, vd& b, vd& c, vi& integer_constraint)
+	void branch(int d)
 	{
 		if (d > 250)
 		{
@@ -71,7 +95,7 @@ struct node
 				new_integrality[v] = 1;
 				b.push_back(floor(x[v]));
 				A.push_back(new_integrality);
-				children.emplace_back(new node(v, 1LL, A, b, c, integer_constraint));
+				children.emplace_back(new node(v, 1LL));
 				b.pop_back();
 				A.pop_back();
 
@@ -79,7 +103,7 @@ struct node
 				new_integrality[v] = -1;
 				b.push_back(-ceil(x[v]));
 				A.push_back(new_integrality);
-				children.emplace_back(new node(v, 0LL, A, b, c, integer_constraint));
+				children.emplace_back(new node(v, 0LL));
 				b.pop_back();
 				A.pop_back();
 			}
@@ -98,10 +122,9 @@ struct node
 			new_integrality[idx] = child->smaller ? 1 : -1;
 			b.push_back(child->smaller ? floor(x[idx]) : -ceil(x[idx]));
 			A.push_back(new_integrality);
-			child->bb(d + 1, A, b, c, integer_constraint);
+			child->branch(d + 1);
 			b.pop_back();
 			A.pop_back();
 		}
 	}
 };
-
