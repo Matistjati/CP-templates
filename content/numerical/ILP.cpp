@@ -1,113 +1,107 @@
-// Include KACTL LP solver
-// ILP. Maximize
-bool is_integer(double x)
-{
-	return abs(x - floor(x)) < 1e-9;
-}
-
-bool is_feasible(vd& x, vvd& A, vd& b, vi& integer_constraint)
-{
-	rep(i, sz(x))
-	{
-		if (integer_constraint[i] && !is_integer(x[i])) return false;
-	}
-	rep(i, sz(b))
-	{
-		double v = 0;
-		rep(j, sz(x)) v += x[j] * A[i][j];
-		if (v > b[i]) return false;
-	}
-
-	return true;
-}
+// Use with KACTL LP solver
 
 double global_lb = -inf;
-void bb(int d, vvd& A, vd& b, vd& c, vi& integer_constraint)
+struct node
 {
-	if (d > 200)
+	double ub;
+	vd x;
+	int var_index;
+	int smaller;
+	bool pruned = 0;
+	node(int var_index, int smaller, vvd& A, vd& b, vd& c, vi& integer_constraint) : smaller(smaller), var_index(var_index)
 	{
-		return;
-	}
-
-	LPSolver simplex(A, b, c);
-	vd x(sz(c));
-	double v = simplex.solve(x);
-	if (v == -inf) return;
-	if (v < global_lb)
-	{
-		return;
-	}
-	assert(v != inf);
-
-	// try to obtain lower bounds
-	if (is_feasible(x,A,b,integer_constraint))
-	{
-		global_lb = max(global_lb, v);
-	}
-	else
-	{
-		vd rounded(x);
-		rep(i, sz(rounded)) rounded[i] = floor(rounded[i]);
-		if (is_feasible(rounded, A, b, integer_constraint))
+		x.resize(sz(c));
+		ub = LPSolver(A, b, c).solve(x);
+		if (ub == -inf) pruned = 1;
+		if (ub < global_lb)
 		{
-			double lb = 0;
-			rep(i, sz(rounded)) lb += rounded[i] * c[i];
-			global_lb = max(global_lb, lb);
+			pruned = 1;
 		}
-		
-		rounded = x;
-		rep(i, sz(rounded)) rounded[i] = ceil(rounded[i]);
-		if (is_feasible(rounded, A, b, integer_constraint))
+
+		auto check_sol = [&](vd& x)
 		{
-			double lb = 0;
-			rep(i, sz(rounded)) lb += rounded[i] * c[i];
-			global_lb = max(global_lb, lb);
+			if (!is_feasible(x, A, b, integer_constraint)) return false;
+			double value = 0;
+			rep(i, sz(x)) value += x[i] * c[i];
+			global_lb = max(global_lb, value);
+			return true;
+		};
+
+		// try to obtain lower bounds
+		if (check_sol(x))
+		{
+			// if simplex gave us integers, no point in branching from this node
+			pruned = 1;
+		}
+		else
+		{
+			// try to round for bounds
+			vd rounded(x);
+			rep(i, sz(rounded)) rounded[i] = floor(rounded[i]);
+			check_sol(rounded);
+
+			rounded = x;
+			rep(i, sz(rounded)) rounded[i] = ceil(rounded[i]);
+			check_sol(rounded);
+			
+			rounded = x;
+			rep(i, sz(rounded)) rounded[i] = round(rounded[i]);
+			check_sol(rounded);
 		}
 	}
-
-	vector<tuple<double, int, int, double>> children;
-
-	rep(v, sz(c))
+	void bb(int d, vvd& A, vd& b, vd& c, vi& integer_constraint)
 	{
-		if (integer_constraint[v] && !is_integer(x[v]))
+		if (d > 250)
 		{
-			vd tempx(sz(x));
+			return;
+		}
+		if (ub < global_lb)
+		{
+			return;
+		}
 
-			// test v <= floor(x[v])
+		vector<node*> children;
+
+		rep(v, sz(c))
+		{
+			if (integer_constraint[v] && !is_integer(x[v]))
+			{
+				vd new_integrality(sz(c));
+				// test v <= floor(x[v])
+				new_integrality[v] = 1;
+				b.push_back(floor(x[v]));
+				A.push_back(new_integrality);
+				children.emplace_back(new node(v, 1LL, A, b, c, integer_constraint));
+				b.pop_back();
+				A.pop_back();
+
+				// test v >= ceil(x[v])
+				new_integrality[v] = -1;
+				b.push_back(-ceil(x[v]));
+				A.push_back(new_integrality);
+				children.emplace_back(new node(v, 0LL, A, b, c, integer_constraint));
+				b.pop_back();
+				A.pop_back();
+			}
+		}
+		// branch on largest children first
+		sort(all(children), [](node* a, node* b)
+			{
+				return a->ub > b->ub;
+			});
+
+		repe(child, children)
+		{
+			if (child->pruned) continue;
+			int idx = child->var_index;
 			vd new_integrality(sz(c));
-			new_integrality[v] = 1;
-
-			b.push_back(floor(x[v]));
+			new_integrality[idx] = child->smaller ? 1 : -1;
+			b.push_back(child->smaller ? floor(x[idx]) : -ceil(x[idx]));
 			A.push_back(new_integrality);
-			children.emplace_back(LPSolver(A, b, c).solve(tempx), v, 1, floor(x[v]));
-			b.pop_back();
-			A.pop_back();
-
-			// test v >= ceil(x[v])
-			new_integrality[v] = -1;
-			b.push_back(-ceil(x[v]));
-			A.push_back(new_integrality);
-			children.emplace_back(LPSolver(A, b, c).solve(tempx), v, -1, -ceil(x[v]));
+			child->bb(d + 1, A, b, c, integer_constraint);
 			b.pop_back();
 			A.pop_back();
 		}
 	}
-	// branch on largest children first
-	sort(all(children));
-	reverse(all(children));
+};
 
-	repe(child, children)
-	{
-		double _, cc;
-		int v, sign;
-		tie(_, v, sign, cc) = child;
-		vd new_integrality(sz(c));
-		new_integrality[v] = sign;
-		b.push_back(cc);
-		A.push_back(new_integrality);
-		bb(d + 1, A, b, c, integer_constraint);
-		b.pop_back();
-		A.pop_back();
-	}
-
-}
