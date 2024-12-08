@@ -1,51 +1,29 @@
-struct Centroid
-{
-    int n;
-    vvi edges;
-    vb vis;
-    vi par;
-    vi size;
-
-    Centroid() {}
-    Centroid(vvi& edges) : edges(edges), n(edges.size()), vis(n),par(n),size(n)
-    {
-        init_centroid(0, -1);
+struct Centroid {
+    vector<vi> adj, children;
+    vi cnt, par;
+    Centroid(const vector<vi>& adj) : adj(adj),
+        children(sz(adj)), cnt(sz(adj),-1), par(sz(adj),-1) {
+        dfs(0, -1);
     }
-
-    int find_centroid(int u, int p, int n)
-    {
-        repe(e, edges[u])
-        {
-            if (e == p) continue;
-            if (!vis[e] && size[e] > n / 2) return find_centroid(e, u, n);
-        }
+    void calc_sz(int u, int p) {
+        cnt[u] = 1;
+        for (int e : adj[u])
+            if (e != p) calc_sz(e, u), cnt[u] += cnt[e];
+    }
+    int find_centroid(int u, int p, int n) {
+        for (int e : adj[u])
+            if (e != p && cnt[e] > n / 2)
+                return find_centroid(e, u, n);
         return u;
     }
-
-    int find_size(int u, int p)
-    {
-        if (vis[u]) return 0;
-        size[u] = 1;
-
-        repe(e, edges[u])
-        {
-            if (e == p) continue;
-            size[u] += find_size(e, u);
-        }
-        return size[u];
-    }
-
-    void init_centroid(int u, int p)
-    {
-        find_size(u, u);
-
-        int c = find_centroid(u, u, size[u]);
-        vis[c] = 1;
-        par[c] = p;
-
-        repe(e, edges[c])
-        {
-            if (!vis[e]) init_centroid(e, c);
+    void dfs(int u, int p) {
+        calc_sz(u, -1);
+        u = find_centroid(u, u, cnt[u]);
+        par[u] = p;
+        if (p!=-1) children[p].push_back(u);
+        for (int e : adj[u]) {
+            adj[e].erase(find(all(adj[e]), u));
+            dfs(e, u);
         }
     }
 };

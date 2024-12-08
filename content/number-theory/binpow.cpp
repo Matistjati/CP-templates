@@ -1,5 +1,6 @@
 int binpow(int a, int b, int m) // a^b mod m
 {
+    a %= m;
     int ret = 1;
     int e = a;
     while (b)
