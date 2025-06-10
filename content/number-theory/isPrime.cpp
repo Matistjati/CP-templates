@@ -1,20 +1,10 @@
 // Also has modmul
 
-// Slow version for msvc. both compute a*b%k, which is hard if a*b>2^63
 #if _LOCAL
-const int bits = 1;
-// if all numbers are less than 2^k, set bits = 64-k
-const ull po = 1ULL << bits;
+#include <__msvc_int128.hpp>
 ull modmul(ull a, ull b, ull c) {
-    ull x = a * (b & (po - 1)) % c;
-    while ((b >>= bits) > 0) {
-        a = (a << bits) % c;
-        x += (a * (b & (po - 1))) % c;
-        x %= c;
-    }
-    return x % c;
+    return (ull)(_Unsigned128(a) * b % c);
 }
-
 #else
 ull modmul(ull a, ull b, ull M) {
     ll ret = a * b - M * ull(1.L / M * a * b);

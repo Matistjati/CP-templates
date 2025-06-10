@@ -1,27 +1,19 @@
-
-// Helper function
-void setDivisors(ull n, ull i, vector<ull>& divisors, vector<pair<ull, ull>>& factors) {
-    ull j, x, k;
-    for (j = i; j < factors.size(); j++) {
-        x = factors[j].first * n;
-        for (k = 0; k < factors[j].second; k++) {
-            divisors.push_back(x);
-            setDivisors(x, j + 1, divisors, factors);
-            x *= factors[j].first;
+vector<ull> getDivisors(vector<ull> primes) {
+    unordered_map<int, int> cnt;
+    repe(p, primes) cnt[p]++;
+    vector<ull> d = { 1 };
+    for (auto [p, e] : cnt) {
+        int n0 = sz(d);
+        rep(i, n0) {
+            ll cur = d[i];
+            rep(j, e) {
+                cur *= p;
+                d.push_back(cur);
+            }
         }
     }
-}
-// Get all factor from a list of primes
-vector<ull> getDivisors(vector<ull> primes)
-{
-    unordered_map<ull, ull> primeCount;
-    repe(prime, primes) primeCount[prime]++;
-    vector<pair<ull, ull>> factorCount;
-    repe(p, primeCount) factorCount.emplace_back(p);
-    vector<ull> ret;
-    setDivisors(1, 0, ret, factorCount);
-    ret.push_back(1);
-    return ret;
+    sort(all(d));
+    return d;
 }
 
 // Get the number of divisors given factors. A lot faster than getDivisors(...).size()
