@@ -1,5 +1,5 @@
 vector<ull> getDivisors(vector<ull> primes) {
-    unordered_map<int, int> cnt;
+    unordered_map<ull, int> cnt;
     repe(p, primes) cnt[p]++;
     vector<ull> d = { 1 };
     for (auto [p, e] : cnt) {
