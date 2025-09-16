@@ -1,32 +1,28 @@
-// minima ($n$+k)*log($max_v$)/log(k)
-// Find nearest k that is power of two
-// If k^2>max_v, then it can be unrolled into two loops, one using only mod and the other only division
-const int radix = 1 << 16;
-const int radixmod = radix - 1;
-void countsort(vi& nums, int power)
-{
-    vi out(nums.size());
-    vi count(radix);
-    rep(i, radix) count[i] = 0;
 
-    repe(num, nums) count[(num / power) & radixmod]++;
-    repp(i, 1, radix) count[i] += count[i - 1];
+typedef tuple<int, int, int> T;
+void radix_sort_pairs(vector<T>& a) {
+    const int B = 8;
+    const int MASK = (1 << B) - 1;
+    const int PASSES = (32 + B - 1) / B;
 
-    for (int i = nums.size() - 1; i >= 0; i--)
-    {
-        int num = nums[i];
-        out[count[(num / power) & radixmod] - 1] = num;
-        count[(num / power) & radixmod]--;
-    }
+    vector<T> tmp(a.size());
+    for (int pass = 0; pass < PASSES; pass++) {
+        int shift = pass * B;
 
-    nums.swap(out);
-}
+        int cnt[1 << B] = { 0 };
+        for (auto& x : a)
+            cnt[(get<0>(x) >> shift) & MASK]++; // change this
 
-void radixsort(vi& nums)
-{
-    int m = *max_element(all(nums));
-    for (int i = 1; m / i > 0; i *= radix)
-    {
-        countsort(nums, i);
+        int pref[1 << B];
+        pref[0] = 0;
+        for (int i = 1; i < (1 << B); i++)
+            pref[i] = pref[i - 1] + cnt[i - 1];
+
+        for (auto& x : a) {
+            int d = (get<0>(x) >> shift) & MASK; // and this
+            tmp[pref[d]++] = x;
+        }
+        a.swap(tmp);
     }
 }
+
