@@ -1,3 +1,4 @@
+// why would you need this, just memorize smh
 const int hi = int(2e5 + 10);
 struct LCA
 {
