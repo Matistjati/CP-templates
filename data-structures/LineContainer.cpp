@@ -5,60 +5,80 @@
  * Description: Stores the upper hull of a bunch of lines.
  * Implements query max at some coordinate, max plus convolution/
  * minkowski sum, and max of two. Unclear numerical stability.
+ * Status: tested on kattis:Ruler of Everything and swerc24:titanmachy
  */
 
-struct Line {
-    long long k, m; // y = kx + m
-    mutable long double xRight; // intersection with next line
+ struct Line {
+    ll k, m, xRight; // y = kx + m and intersection with next line
     bool operator<(const Line& o) const {
         return k < o.k;
+    }
+    bool operator<(ll x) const {
+        return xRight < x;
     }
     Line operator+(const Line& other) const {
         return { k + other.k,m + other.m, 0 };
     }
+    ll eval(ll x) const {
+        return k * x + m;
+    }
 };
 
-long double intersect(const Line& a, const Line& b) {
-    return (long double)(b.m - a.m) / (a.k - b.k);
-}
+#if _LOCAL
+#include <__msvc_int128.hpp>
+using big_signed = _Signed128;
+#else
+using big_signed = __int128;
+#endif
 
-const ll maxt = ll(8e9) + 10;
-struct UpperHull {
+struct UpperHull { // invariant: every upperhull is sorted and no useless lines
+    // if you add custom operations, ensure xRight is always set
     vector<Line> hull;
-
-    static vector<Line> buildHull(vector<Line>& lines) {
-        sort(all(lines));
+    static ll div(ll a, ll b) { // floored division
+        return a / b - ((a ^ b) < 0 && a % b);
+    }
+    static bool intersection_geq(const Line& A, const Line& B, const Line& C) {
+        big_signed left = (big_signed)(B.m - A.m) * (big_signed)(A.k - C.k);
+        big_signed right = (big_signed)(C.m - A.m) * (big_signed)(A.k - B.k);
+        return left >= right;
+    }
+    static vector<Line> merge_sorted(const vector<Line>& a, const vector<Line>& b) {
         vector<Line> res;
-        res.reserve(sz(lines));
-        for (const Line& l : lines) {
+        res.reserve(sz(a) + sz(b));
+        int i = 0;
+        int j = 0;
+        auto tryadd = [&](const Line& l) {
             if (!res.empty() && res.back().k == l.k) {
-                if (res.back().m >= l.m) continue;
+                if (res.back().m >= l.m) return;
                 res.pop_back();
             }
-            while (res.size() >= 2 &&
-                intersect(res[sz(res)-2], res.back()) >= intersect(res[sz(res) - 2], l)) {
+            while (res.size() >= 2 && intersection_geq(res[sz(res) - 2], res.back(), l)) {
                 res.pop_back();
             }
             res.push_back(l);
+            };
+        while (i < sz(a) && j < sz(b)) {
+            if (a[i].k < b[j].k) tryadd(a[i++]);
+            else tryadd(b[j++]);
         }
-
-        rep(i, sz(res)-1) res[i].xRight = intersect(res[i], res[i + 1]);
+        while (i < sz(a)) tryadd(a[i++]);
+        while (j < sz(b)) tryadd(b[j++]);
+        rep(i, sz(res) - 1) res[i].xRight = div(res[i + 1].m - res[i].m, res[i].k - res[i + 1].k);
         if (!res.empty()) res.back().xRight = 1e18;
         return res;
     }
 
-    UpperHull(const vector<Line>& lines) : hull(lines) {}
-    UpperHull(vector<p2>& input) {
-        vector<Line> temp;
-        for (auto& [k, m] : input) temp.push_back({k, m, 0 });
-        hull = buildHull(temp);
+    static vector<Line> build_unsorted(vector<Line>& l) {
+        sort(all(l));
+        return merge_sorted(l, {});
     }
+
+    UpperHull(vector<Line>& lines) : hull(build_unsorted(lines)) {}
+    UpperHull(const vector<Line>& lines, bool) : hull(lines) {}
     UpperHull() {}
 
     UpperHull max(const UpperHull& other) const {
-        vector<Line> merged = hull;
-        merged.insert(merged.end(), all(other.hull));
-        return UpperHull{ buildHull(merged) };
+        return { merge_sorted(this->hull, other.hull), 0 };
     }
 
     UpperHull minkowskiSum(const UpperHull& other) const {
@@ -76,16 +96,12 @@ struct UpperHull {
         }
         while (i < A.size()) merged.push_back(A[i++] + B.back());
         while (j < B.size()) merged.push_back(A.back() + B[j++]);
-        return UpperHull{ buildHull(merged) };
+        return { merge_sorted(merged, {}), 0 };
     }
 
-    long double eval(long double x) const {
-        auto it = lower_bound(all(hull), x,
-            [](const Line& L, long double v) {
-                return L.xRight < v;
-            });
-        if (it == hull.end()) it = prev(it);
-        return (long double)it->k * x + it->m;
+    ll eval(ll x) const { // if assert fails, you didnt maintain invariants
+        assert(sz(hull) && hull.back().xRight == inf);
+        auto it = lower_bound(all(hull), x);
+        return it->eval(x);
     }
 };
-
