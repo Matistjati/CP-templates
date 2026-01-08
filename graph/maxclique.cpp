@@ -1,69 +1,96 @@
-
-const int maxn = 100;
-typedef vector<bitset<maxn>> bset;
-const double time_lim_ms = 50;
-vi MaxClique(bset adj)
+// also include
+/*
+#pragma GCC optimize("Ofast")
+#include <bits/allocator.h>
+#pragma GCC target("avx2,bmi,bmi2,popcnt")
+#include <bits/stdc++.h>
+...
+*/
+using bset = bitset<100>;
+const double TIME_LIMIT_MS = 1950;
+const int RESTARTS = 250; // Smaller for larger N
+// If large amount of restart, be careful to not TLE
+bset max_indep_set(vector<bset> adj)
 {
-    int n = sz(adj);
-    mt19937_64 rng(10);
-    uniform_real_distribution<double> dist01(0, 1);
-    uniform_int_distribution<int> node_dist(0, n - 1);
+    if (sz(adj) == 0) return {};
+    rep(i, sz(adj)) adj[i][i] = 0;
 
-    bitset<maxn> cur;
-    int best_score = 0;
-    int cur_score = 0;
-
-    const double Tlo = 1e-3;
-    const double Thi = 100;
-
-    auto start = chrono::high_resolution_clock::now();
-    bitset<maxn> ret;
-    double t, T;
-    int i = 0;
-    while (1)
+    bset best_set;
+    int best_size = 0;
+    using namespace chrono;
+    auto solve = [&]()
     {
-        if (i++%100==0)
-        {
-            t = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() / time_lim_ms;
-            if (t > 0.99) break;
-            T = Tlo * pow(Thi / Tlo, t);
-        }
+        int indep_set_size = 0;
+        bset indep;
+        uniform_int_distribution<int> dist_n(0, sz(adj) - 1);
 
-        int u = node_dist(rng);
-        int increase = 0;
-        if (!cur[u])
-        {
-            increase = 1 - (~adj[u] & cur).count();
-        }
-        else increase = -1;
+        uniform_real_distribution<double> dist_01(0, 1);
+        mt19937 rng(time(0));
+        double t_start = sz(adj)/10, t_end = 4e-2; // t_end<t_start
+        auto start = high_resolution_clock::now();
 
-        if (increase >= 0 || dist01(rng) < exp(increase / T))
-        {
-            if (!cur[u]) cur = (cur & adj[u]);
-            cur[u] = !cur[u];
-            cur_score += increase;
-            if (cur_score > best_score)
+        int current_size = 0;
+        int its = 0;
+        double tim = 0, temp = t_start;
+        while (1) {
+            if ((its++) % 128 == 0)
             {
-                best_score = cur_score;
-                ret = cur;
+                tim = duration_cast<milliseconds>(high_resolution_clock::now() - start).count() / (TIME_LIMIT_MS / RESTARTS);
+                if (tim > 0.99) break;
+                temp = t_start * pow(t_end / t_start, tim);
             }
-            best_score = max(best_score, cur_score);
+            if (its % 100000 == 0)
+            {
+                cerr << "size: " << indep_set_size << ", temp:" << temp << ", time:" << tim << '\n';
+            }
+            // mutate
+            int ind = dist_n(rng);
+            bset kicked_out;
+            if (indep[ind])
+            {
+                indep_set_size--;
+            }
+            else
+            {
+                kicked_out = indep & adj[ind];
+
+                indep_set_size++;
+                indep_set_size -= kicked_out.count();
+            }
+            indep[ind] = !indep[ind];
+
+            int new_cost = indep_set_size;
+            if (new_cost > current_size || dist_01(rng) < exp((new_cost - current_size) / temp)) {
+                current_size = new_cost;
+                if (current_size>best_size)
+                {
+                    best_size = current_size;
+                    best_set = indep;
+                }
+                indep &= ~kicked_out;
+            }
+            else {
+                //undo
+                indep_set_size += kicked_out.count();
+                indep_set_size += indep[ind] ? -1 : 1;
+                indep[ind] = !indep[ind];
+            }
         }
+    };
+    rep(i, RESTARTS)
+    {
+        solve();
+        cerr << "RESTART\n";
     }
-    vi ret_ind;
-    rep(i, n) if (ret[i]) ret_ind.push_back(i);
-    return ret_ind;
-}
-vi MaxIndepSet(bset adj)
-{
-    rep(i, sz(adj)) adj[i] = ~adj[i], adj[i][i] = 0;
-    return MaxClique(adj);
-}
-vi MinVertexCover(bset adj)
-{
-    vi ret;
-    vi indep = MaxIndepSet(adj);
-    rep(i, sz(adj)) if (!binary_search(all(indep), i)) ret.push_back(i);
-    return ret;
+    return best_set;
 }
 
+bset max_clique(vector<bset> adj)
+{
+    rep(i, sz(adj)) adj[i] = ~adj[i];
+    return max_indep_set(adj);
+}
+bset min_vertex_cover(vector<bset> adj)
+{
+    return ~max_indep_set(adj);
+}
