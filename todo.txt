@@ -1,0 +1,2 @@
+https://github.com/zimpha/algorithmic-library/blob/master/cpp/mathematics/linear-recurrence.cc
+
