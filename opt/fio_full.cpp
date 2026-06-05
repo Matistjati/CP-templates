@@ -14,22 +14,23 @@ struct FastIO {
         fstat(0, &st);
         p = (char*)mmap(nullptr, st.st_size, PROT_READ, MAP_PRIVATE, 0, 0);
     }
-    inline unsigned read_uint() {
+    // Only handles unsigned!!!
+    template<typename T>
+    FastIO& operator>> (T& x) {
         while (*p < '0') p++;
-        unsigned x = *p++ - '0';
+        x = *p++ - '0';
         while (*p >= '0') {
             x = x * 10 + *p++ - '0';
         }
-        return x;
+        return *this;
     }
-    inline void write_uint(unsigned x) {
-        if (op - ob >= (1 << 20) - 12) {
+    FastIO& operator<< (int x) {
+        if (op - ob >= (1 << 20) - 11) {
             write(1, ob, op - ob);
             op = ob;
         }
-        char buf[12];
-        int i = 12;
-        buf[--i] = '\n';
+        char buf[11];
+        int i = 11;
         while (x >= 100) {
             unsigned const idx = (x % 100) * 2;
             x /= 100;
@@ -43,11 +44,23 @@ struct FastIO {
         } else {
             buf[--i] = (char)(x + '0');
         }
-        int len = 12 - i;
+        int len = 11 - i;
         memcpy(op, &buf[i], len);
         op += len;
+        return *this;
+    }
+    FastIO& operator<< (char c) {
+        if (op - ob >= (1 << 20) - 1) {
+            write(1, ob, op - ob);
+            op = ob;
+        }
+        *op++ = c;
+        return *this;
     }
     void flush() {
         write(1, ob, op - ob);
     }
-};
+    ~FastIO() {flush();}
+} fio;
+#define cin fio
+#define cout fio

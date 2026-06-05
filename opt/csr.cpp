@@ -1,4 +1,4 @@
-using item = int;
+template<typename item>
 struct CSR
 {
     vector<pair<int, item>> pending;
@@ -23,8 +23,6 @@ struct CSR
     }
 
     span<item> operator[](int u) {
-        assert(pending.empty());
         return span<item>(adj.data() + outdeg[u], adj.data() + outdeg[u+1]);
     }
 };
-
