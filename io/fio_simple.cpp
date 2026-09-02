@@ -6,7 +6,8 @@ struct FastIO {
     FastIO() {
         struct stat st;
         fstat(0, &st);
-        p = (char*)mmap(nullptr, st.st_size, PROT_READ, MAP_PRIVATE, 0, 0);
+        p = (char*)mmap(nullptr, st.st_size, PROT_READ,
+                        MAP_PRIVATE | MAP_POPULATE, 0, 0);
     }
     // Only handles unsigned!!!
     template<typename T>
