@@ -1,28 +1,18 @@
-template<typename item>
-struct CSR
-{
-    vector<pair<int, item>> pending;
-    vector<int> outdeg, counter;
-    vector<item> adj;
-    // N: number of rows. M: total number of items
-    CSR(int n, int m) : adj(m), outdeg(n) { pending.reserve(m); }
-    CSR() { }
-    void add(int idx, const item& x) { pending.emplace_back(idx, x); }
+template<class T>
+struct CSR {
+    vector<int> st;
+    vector<T> adj;
+    vector<pair<int, T>> pending;
+    // n: number of rows. m: expected number of items
+    CSR(int n = 0, int m = 0) : st(n + 1) { pending.reserve(m); }
+    void add(int u, const T& x) { pending.emplace_back(u, x); }
     void build() {
-        assert(sz(pending)==sz(adj));
-        for (auto& [from, e] : pending) {
-            outdeg[from]++;
-        }
-        outdeg.insert(outdeg.begin(), 0);
-        partial_sum(all(outdeg), begin(outdeg));
-        counter = outdeg;
-        for (auto& [from, e] : pending) {
-            adj[counter[from]++] = e;
-        }
-        pending.clear();
+        for (auto& [u, x] : pending) st[u+1]++;
+        partial_sum(all(st), begin(st));
+        adj.resize(sz(pending));
+        vector<int> pos(begin(st), end(st) - 1);
+        for (auto& [u, x] : pending) adj[pos[u]++] = x;
+        vector<pair<int, T>>().swap(pending);
     }
-
-    span<item> operator[](int u) {
-        return span<item>(adj.data() + outdeg[u], adj.data() + outdeg[u+1]);
-    }
+    span<T> operator[](int u) { return {adj.data() + st[u], adj.data() + st[u+1]}; }
 };
