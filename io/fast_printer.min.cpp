@@ -1,4 +1,4 @@
-// Minified fast output writer from https://github.com/Matistjati/CP-templates
+// Minified fast output writer from https://github.com/Matistjati/CP-templates. V 1.1
 #include <unistd.h>
 alignas(64) static char kD2[200],kD4[10000][4];
 struct FastOutput{static const int BUF=1<<15;char b[BUF+64],*p=b;
@@ -19,6 +19,7 @@ FastOutput&operator<<(char c){need(1);*p++=c;return *this;}
 FastOutput&put(const char*s,size_t n){if(n>(size_t)BUF){flush();raw(s,n);return *this;}need(n);memcpy(p,s,n);p+=n;return *this;}
 FastOutput&operator<<(const char*s){return put(s,strlen(s));}
 FastOutput&operator<<(std::string_view s){return put(s.data(),s.size());}
-template<class T>void print(const std::vector<T>&v,char sep=' ',char end='\n'){size_t i=0,n=v.size();while(i<n){size_t f=(size_t)(b+BUF-p)/24;if(!f){flush();continue;}size_t j=i+(f<n-i?f:n-i);char*q=p;for(;i<j;i++){q=ev(q,v[i]);*q++=sep;}p=q;}if(n){if(end)p[-1]=end;else p--;}else if(end){need(1);*p++=end;}}
+template<class T>void print(const T*a,size_t n,char sep=' ',char end='\n'){size_t i=0;while(i<n){size_t f=(size_t)(b+BUF-p)/24;if(!f){flush();continue;}size_t j=i+(f<n-i?f:n-i);char*q=p;for(;i<j;i++){q=ev(q,a[i]);*q++=sep;}p=q;}if(n){if(end)p[-1]=end;else p--;}else if(end){need(1);*p++=end;}}
+template<class T>void print(const std::vector<T>&v,char sep=' ',char end='\n'){print(v.data(),v.size(),sep,end);}
 }printer;
 #define cout printer

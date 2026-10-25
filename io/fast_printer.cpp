@@ -118,18 +118,20 @@ struct FastOutput {
     // out of the inner loop: we work out how many items certainly fit, then run
     // that many with p in a register.
     template<class T>
-    void print(const std::vector<T>& v, char sep = ' ', char end = '\n') {
-        size_t i = 0, n = v.size();
+    void print(const T* a, size_t n, char sep = ' ', char end = '\n') {
+        size_t i = 0;
         while (i < n) {
             size_t fits = (size_t)(b + BUF - p) / 24;
             if (!fits) { flush(); continue; }
             size_t j = i + (fits < n - i ? fits : n - i);
             char* q = p;
-            for (; i < j; i++) { q = emitval(q, v[i]); *q++ = sep; }
+            for (; i < j; i++) { q = emitval(q, a[i]); *q++ = sep; }
             p = q;
         }
         if (n) { if (end) p[-1] = end; else p--; }
         else if (end) { need(1); *p++ = end; }
     }
+    template<class T>
+    void print(const std::vector<T>& v, char sep = ' ', char end = '\n') { print(v.data(), v.size(), sep, end); }
 } printer;
 #define cout printer
