@@ -1,4 +1,4 @@
-#pragma GCC target("avx2")
+#pragma GCC target("avx2,bmi,bmi2")
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
