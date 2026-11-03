@@ -3,7 +3,7 @@ using ull = unsigned long long;
 using T = ull;
 uint64_t key_(const T& x) { return x; } // Does not handle negative numbers
 
-//assert(2^(P*B) > max(a)). B=8 is usually a good choise
+//assert(2^(P*B) > max(a)). B=8 is usually a good choice
 template<int B, int P>
 void radix_sort(vector<T>& a) {
     const int M = (1 << B) - 1;

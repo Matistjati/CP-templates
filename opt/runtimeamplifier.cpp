@@ -1,14 +1,4 @@
-#pragma GCC optimize("O3,unroll-loops")
-#include <bits/allocator.h>
-#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
-
-...
-
-fast io
-
-...
-
-struct RuntimeAmplifier {
+struct RuntimeAmplifier { // Kattis rounds to two decimals: increase effective precision
     using Clock = chrono::steady_clock;
     Clock::time_point start_time;
     const double multiplier=50;
@@ -19,19 +9,3 @@ struct RuntimeAmplifier {
     }
 };
 RuntimeAmplifier amp;
-
-...
-
-cpu_set_t cpuset;
-CPU_ZERO(&cpuset);
-CPU_SET(2, &cpuset);
-assert(sched_setaffinity(0,sizeof(cpuset),&cpuset)==0);
-
-
-...
-
-
-cout << flush;
-_Exit(0);
-
-
